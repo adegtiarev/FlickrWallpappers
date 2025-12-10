@@ -83,7 +83,7 @@ fun PhotoDetailScreen(
                 CircularProgressIndicator()
             } else {
                 AsyncImage(
-                    model = photo?.url?.replace("_m.jpg", "_b.jpg"), // Загружаем большую версию
+                    model = photo?.url?.replace("_m.jpg", "_b.jpg"), // Load the large version
                     contentDescription = photo?.title,
                     modifier = Modifier
                         .fillMaxSize()

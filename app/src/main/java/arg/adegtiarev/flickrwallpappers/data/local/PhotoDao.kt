@@ -10,44 +10,44 @@ import arg.adegtiarev.flickrwallpappers.data.local.model.Photo
 import kotlinx.coroutines.flow.Flow
 
 /**
- * Data Access Object (DAO) для работы с сущностями Photo в базе данных.
+ * Data Access Object (DAO) for working with Photo entities in the database.
  */
 @Dao
 interface PhotoDao {
 
     /**
-     * Вставляет список фотографий в базу данных.
-     * Если фотография с таким же id уже существует, она будет заменена.
+     * Inserts a list of photos into the database.
+     * If a photo with the same id already exists, it will be replaced.
      */
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertAll(photos: List<Photo>)
 
     /**
-     * Обновляет существующую фотографию в базе данных.
+     * Updates an existing photo in the database.
      */
     @Update
     suspend fun update(photo: Photo)
 
     /**
-     * Возвращает PagingSource для получения фотографий в виде постраничных данных.
+     * Returns a PagingSource for getting photos as paged data.
      */
     @Query("SELECT * FROM photos")
     fun pagingSource(): PagingSource<Int, Photo>
 
     /**
-     * Возвращает Flow со списком всех фотографий, отмеченных как избранные.
+     * Returns a Flow with a list of all photos marked as favorites.
      */
     @Query("SELECT * FROM photos WHERE isFavorite = 1")
     fun getFavoritePhotos(): Flow<List<Photo>>
 
     /**
-     * Возвращает Flow с одной фотографией по её ID.
+     * Returns a Flow with a single photo by its ID.
      */
     @Query("SELECT * FROM photos WHERE id = :photoId")
     fun getPhotoById(photoId: String): Flow<Photo?>
 
     /**
-     * Удаляет все фотографии из таблицы.
+     * Deletes all photos from the table.
      */
     @Query("DELETE FROM photos")
     suspend fun clearAll()

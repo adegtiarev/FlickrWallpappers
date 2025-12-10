@@ -16,15 +16,15 @@ class FavoritesViewModel @Inject constructor(
 ) : ViewModel() {
 
     /**
-     * Поток со списком избранных фотографий.
-     * `stateIn` преобразует холодный Flow в горячий StateFlow, который
-     * хранит последнее значение и отдает его новым подписчикам.
+     * A stream with a list of favorite photos.
+     * `stateIn` converts a cold Flow into a hot StateFlow, which
+     * stores the last value and provides it to new subscribers.
      */
     val favoritePhotos: StateFlow<List<Photo>> = photoRepository
         .getFavoritePhotos()
         .stateIn(
             scope = viewModelScope,
-            started = SharingStarted.WhileSubscribed(5000), // Начинает и останавливает сбор данных при наличии/отсутствии подписчиков
-            initialValue = emptyList() // Начальное значение - пустой список
+            started = SharingStarted.WhileSubscribed(5000), // Starts and stops data collection when subscribers are present/absent
+            initialValue = emptyList() // Initial value is an empty list
         )
 }

@@ -16,9 +16,9 @@ class PhotoListViewModel @Inject constructor(
 ) : ViewModel() {
 
     /**
-     * Поток постраничных данных фотографий для отображения в UI.
-     * `cachedIn(viewModelScope)` кэширует данные, чтобы они переживали
-     * изменения конфигурации.
+     * A stream of paged photo data for display in the UI.
+     * `cachedIn(viewModelScope)` caches the data so that it survives
+     * configuration changes.
      */
     val photos: Flow<PagingData<Photo>> = photoRepository
         .getPhotos()

@@ -4,13 +4,13 @@ import androidx.room.Entity
 import androidx.room.PrimaryKey
 
 /**
- * Представляет сущность фотографии в локальной базе данных.
+ * Represents a photo entity in the local database.
  *
- * @param id Уникальный идентификатор фотографии (используется как первичный ключ).
- * @param title Название фотографии.
- * @param url URL для загрузки изображения (маленький размер).
- * @param owner Имя владельца фотографии.
- * @param isFavorite Флаг, указывающий, добавлена ли фотография в избранное.
+ * @param id Unique identifier of the photo (used as primary key).
+ * @param title The title of the photo.
+ * @param url URL for loading the image (small size).
+ * @param owner The name of the photo owner.
+ * @param isFavorite Flag indicating whether the photo has been added to favorites.
  */
 @Entity(tableName = "photos")
 data class Photo(

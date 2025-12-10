@@ -6,23 +6,23 @@ import arg.adegtiarev.flickrwallpappers.data.local.model.Photo
 import arg.adegtiarev.flickrwallpappers.data.local.model.RemoteKeys
 
 /**
- * Основной класс базы данных приложения.
- * Определяет список сущностей и версию базы данных.
+ * The main database class for the application.
+ * Defines the list of entities and the database version.
  */
 @Database(
-    entities = [Photo::class, RemoteKeys::class], // Добавляем RemoteKeys
-    version = 2, // Увеличиваем версию из-за изменения схемы
+    entities = [Photo::class, RemoteKeys::class], // Add RemoteKeys
+    version = 2, // Increment version due to schema change
     exportSchema = false
 )
 abstract class AppDatabase : RoomDatabase() {
 
     /**
-     * Предоставляет доступ к DAO для работы с фотографиями.
+     * Provides access to the DAO for working with photos.
      */
     abstract fun photoDao(): PhotoDao
 
     /**
-     * Предоставляет доступ к DAO для работы с ключами удаленной пагинации.
+     * Provides access to the DAO for working with remote pagination keys.
      */
     abstract fun remoteKeysDao(): RemoteKeysDao
 }

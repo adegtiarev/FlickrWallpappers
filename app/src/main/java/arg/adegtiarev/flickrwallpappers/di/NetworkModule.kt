@@ -28,7 +28,7 @@ object NetworkModule {
             val originalHttpUrl: HttpUrl = originalRequest.url
 
             val url = originalHttpUrl.newBuilder()
-                .addQueryParameter("api_key", BuildConfig.FLICKR_API_KEY) // Используем ключ из BuildConfig
+                .addQueryParameter("api_key", BuildConfig.FLICKR_API_KEY) // Use the key from BuildConfig
                 .addQueryParameter("format", "json")
                 .addQueryParameter("nojsoncallback", "1")
                 .addQueryParameter("extras", "url_s")

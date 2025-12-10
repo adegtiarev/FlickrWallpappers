@@ -4,7 +4,7 @@ import arg.adegtiarev.flickrwallpappers.data.local.model.Photo
 import com.google.gson.annotations.SerializedName
 
 /**
- * Верхнеуровневый класс для ответа от Flickr API.
+ * Top-level class for the Flickr API response.
  */
 data class FlickrResponse(
     val photos: PhotosDto,
@@ -12,7 +12,7 @@ data class FlickrResponse(
 )
 
 /**
- * Содержит метаданные и список DTO для фотографий.
+ * Contains metadata and a list of DTOs for photos.
  */
 data class PhotosDto(
     val page: Int,
@@ -23,7 +23,7 @@ data class PhotosDto(
 )
 
 /**
- * DTO для отдельной фотографии. Содержит поля, получаемые от сервера.
+ * DTO for a single photo. Contains fields received from the server.
  */
 data class PhotoDto(
     val id: String,
@@ -37,7 +37,7 @@ data class PhotoDto(
 )
 
 /**
- * Функция-маппер для преобразования сетевой модели [PhotoDto] в локальную сущность [Photo].
+ * Mapper function to convert the network model [PhotoDto] to the local entity [Photo].
  */
 fun PhotoDto.toEntity(): Photo {
     return Photo(

@@ -13,7 +13,7 @@ import retrofit2.HttpException
 import java.io.IOException
 
 /**
- * RemoteMediator для управления загрузкой данных из сети в локальную базу данных.
+ * RemoteMediator to manage loading data from the network into the local database.
  */
 @OptIn(ExperimentalPagingApi::class)
 class FlickrRemoteMediator(
@@ -26,22 +26,22 @@ class FlickrRemoteMediator(
 
     override suspend fun load(loadType: LoadType, state: PagingState<Int, Photo>): MediatorResult {
         return try {
-            // 1. Определяем, какую страницу загружать
+            // 1. Determine which page to load
             val loadKey = when (loadType) {
-                LoadType.REFRESH -> 1 // При обновлении всегда начинаем с первой страницы
-                LoadType.PREPEND -> return MediatorResult.Success(endOfPaginationReached = true) // Мы не загружаем данные в начало списка
+                LoadType.REFRESH -> 1 // Always start from the first page on refresh
+                LoadType.PREPEND -> return MediatorResult.Success(endOfPaginationReached = true) // We don't load data at the beginning of the list
                 LoadType.APPEND -> {
                     val remoteKeys = getLastRemoteKey(state)
                     remoteKeys?.nextKey ?: return MediatorResult.Success(endOfPaginationReached = true)
                 }
             }
 
-            // 2. Загружаем данные из сети
+            // 2. Load data from the network
             val response = flickrApiService.fetchPhotos(page = loadKey)
             val photosDto = response.photos.photo
             val endOfPaginationReached = photosDto.isEmpty()
 
-            // 3. Сохраняем данные в базу данных в рамках одной транзакции
+            // 3. Save the data to the database within a single transaction
             database.withTransaction {
                 if (loadType == LoadType.REFRESH) {
                     photoDao.clearAll()
@@ -60,7 +60,7 @@ class FlickrRemoteMediator(
                 photoDao.insertAll(entities)
             }
 
-            // 4. Возвращаем результат
+            // 4. Return the result
             MediatorResult.Success(endOfPaginationReached = endOfPaginationReached)
         } catch (e: IOException) {
             MediatorResult.Error(e)

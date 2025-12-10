@@ -24,8 +24,8 @@ object DatabaseModule {
             AppDatabase::class.java,
             "flickr_database"
         )
-        // При миграции с версии 1 на 2 мы просто удаляем старые данные. 
-        // В реальном приложении здесь была бы более сложная логика миграции.
+        // When migrating from version 1 to 2, we just delete the old data.
+        // In a real application, there would be more complex migration logic here.
         .fallbackToDestructiveMigration()
         .build()
     }

@@ -4,12 +4,12 @@ import androidx.room.Entity
 import androidx.room.PrimaryKey
 
 /**
- * Сущность для хранения ключей удаленной пагинации.
- * Помогает Paging 3 понять, какую страницу данных загружать следующей.
+ * Entity for storing remote pagination keys.
+ * Helps Paging 3 understand which page of data to load next.
  *
- * @param photoId ID фотографии, к которой привязан ключ. Первичный ключ.
- * @param prevKey Ключ для загрузки предыдущей страницы. Null, если это первая страница.
- * @param nextKey Ключ для загрузки следующей страницы. Null, если это последняя страница.
+ * @param photoId ID of the photo to which the key is attached. Primary key.
+ * @param prevKey Key for loading the previous page. Null if it is the first page.
+ * @param nextKey Key for loading the next page. Null if it is the last page.
  */
 @Entity(tableName = "remote_keys")
 data class RemoteKeys(

@@ -13,7 +13,7 @@ import javax.inject.Inject
 import javax.inject.Singleton
 
 /**
- * Репозиторий для работы с фотографиями. Единственный источник данных для ViewModel.
+ * Repository for working with photos. The single source of truth for ViewModels.
  */
 @Singleton
 class PhotoRepository @Inject constructor(
@@ -23,8 +23,8 @@ class PhotoRepository @Inject constructor(
     private val photoDao = database.photoDao()
 
     /**
-     * Возвращает Flow с постраничными данными фотографий.
-     * Использует RemoteMediator для кэширования данных из сети в локальную базу.
+     * Returns a Flow of PagingData of photos.
+     * Uses RemoteMediator to cache data from the network into the local database.
      */
     @OptIn(ExperimentalPagingApi::class)
     fun getPhotos(): Flow<PagingData<Photo>> {
@@ -42,21 +42,21 @@ class PhotoRepository @Inject constructor(
     }
 
     /**
-     * Возвращает Flow со списком избранных фотографий.
+     * Returns a Flow with a list of favorite photos.
      */
     fun getFavoritePhotos(): Flow<List<Photo>> {
         return photoDao.getFavoritePhotos()
     }
 
     /**
-     * Возвращает Flow с одной фотографией по её ID.
+     * Returns a Flow with a single photo by its ID.
      */
     fun getPhotoById(photoId: String): Flow<Photo?> {
         return photoDao.getPhotoById(photoId)
     }
 
     /**
-     * Обновляет статус "избранное" для фотографии.
+     * Updates the "favorite" status for a photo.
      */
     suspend fun updatePhoto(photo: Photo) {
         photoDao.update(photo)

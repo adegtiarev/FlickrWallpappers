@@ -18,23 +18,23 @@ class PhotoDetailViewModel @Inject constructor(
     savedStateHandle: SavedStateHandle
 ) : ViewModel() {
 
-    // Получаем photoId из аргументов навигации.
-    // "photoId" - это имя аргумента, которое мы определим в графе навигации.
+    // Get photoId from navigation arguments.
+    // "photoId" is the argument name we will define in the navigation graph.
     private val photoId: String = checkNotNull(savedStateHandle["photoId"])
 
     /**
-     * Поток с данными о текущей фотографии.
+     * A stream with the data of the current photo.
      */
     val photo: StateFlow<Photo?> = photoRepository
         .getPhotoById(photoId)
         .stateIn(
             scope = viewModelScope,
             started = SharingStarted.WhileSubscribed(5000),
-            initialValue = null // Начальное значение - null, пока данные не загрузятся
+            initialValue = null // Initial value is null until the data is loaded
         )
 
     /**
-     * Переключает статус "избранное" для текущей фотографии.
+     * Toggles the "favorite" status for the current photo.
      */
     fun toggleFavorite() {
         viewModelScope.launch {
