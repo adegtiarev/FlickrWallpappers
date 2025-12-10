@@ -18,9 +18,9 @@ class PhotoDetailViewModel @Inject constructor(
     savedStateHandle: SavedStateHandle
 ) : ViewModel() {
 
-    // Получаем photoId из аргументов навигации. 
+    // Получаем photoId из аргументов навигации.
     // "photoId" - это имя аргумента, которое мы определим в графе навигации.
-    private val photoId: String = savedStateHandle.get<String>("photoId")!!
+    private val photoId: String = checkNotNull(savedStateHandle["photoId"])
 
     /**
      * Поток с данными о текущей фотографии.
