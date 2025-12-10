@@ -9,7 +9,7 @@ plugins {
     alias(libs.plugins.hilt)
 }
 
-// 1. Read local.properties
+// Read local.properties
 val localProperties = Properties()
 val localPropertiesFile = rootProject.file("local.properties")
 if (localPropertiesFile.exists()) {
@@ -31,8 +31,9 @@ android {
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
 
-        // 3. Add the buildConfigField
-        buildConfigField("String", "FLICKR_API_KEY", localProperties.getProperty("flickr.apiKey", "\"\""))
+        // Get the API key and wrap it in quotes for the BuildConfig
+        val apiKey = localProperties.getProperty("flickr.apiKey", "")
+        buildConfigField("String", "FLICKR_API_KEY", "\"$apiKey\"")
     }
 
     buildTypes {
@@ -42,13 +43,16 @@ android {
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
             )
+            // You might want to define the key for release builds as well, 
+            // possibly from a CI/CD environment variable.
+            val apiKey = localProperties.getProperty("flickr.apiKey", "")
+            buildConfigField("String", "FLICKR_API_KEY", "\"$apiKey\"")
         }
     }
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_11
         targetCompatibility = JavaVersion.VERSION_11
     }
-    // 2. Enable buildConfig
     buildFeatures {
         compose = true
         buildConfig = true
