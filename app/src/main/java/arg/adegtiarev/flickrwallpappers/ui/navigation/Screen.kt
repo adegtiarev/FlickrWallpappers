@@ -6,7 +6,6 @@ package arg.adegtiarev.flickrwallpappers.ui.navigation
  */
 sealed class Screen(val route: String) {
     object PhotoList : Screen("photo_list")
-    object Favorites : Screen("favorites")
 
     // Route for the detail screen includes the photoId argument
     object PhotoDetail : Screen("photo_detail/{photoId}") {
