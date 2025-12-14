@@ -1,6 +1,8 @@
 # Flickr Wallpapers
 
-![App Screenshot](images/screen1.png)
+<p align="center">
+  <img src="images/screen1.png" width="400">
+</p>
 
 A modern, offline-first Android application built entirely with Jetpack Compose. The app fetches photos from the Flickr API, allows users to search for specific images, view them in full-screen, set them as a device wallpaper, and manage a local collection of favorites.
 
