@@ -1,3 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name">FlickrWallpappers</string>
+    <string name="app_name">Flickr Wallpapers</string>
+    <string name="favorites">Favorites</string>
+    <string name="home">Home</string>
+    <string name="search">Search</string>
+    <string name="back">Back</string>
+    <string name="search_photos">Search photos</string>
+    <string name="no_favorite_photos">You have no favorite photos yet.</string>
+    <string name="set_wallpaper">Set Wallpaper</string>
+    <string name="set_as">Set as:</string>
+    <string name="failed_to_set_wallpaper">Failed to set wallpaper</string>
+    <string name="retry">Retry</string>
 </resources>

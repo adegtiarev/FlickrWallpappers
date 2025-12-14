@@ -20,4 +20,10 @@ data class Photo(
     val url: String,
     val owner: String,
     val isFavorite: Boolean = false
-)
+) {
+    /**
+     * Computed property to get the URL for the large version of the image.
+     */
+    val largeImageUrl: String
+        get() = url.replace("_m.jpg", "_b.jpg")
+}

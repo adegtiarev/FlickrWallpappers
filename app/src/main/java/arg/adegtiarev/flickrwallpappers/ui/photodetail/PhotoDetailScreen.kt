@@ -30,6 +30,7 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import arg.adegtiarev.flickrwallpappers.R
@@ -48,7 +49,6 @@ fun PhotoDetailScreen(
     var scale by remember { mutableFloatStateOf(1f) }
     var offset by remember { mutableStateOf(Offset.Zero) }
 
-    // Listen for events from the ViewModel
     LaunchedEffect(Unit) {
         viewModel.setWallpaperEvent.collectLatest { event ->
             when (event) {
@@ -56,7 +56,7 @@ fun PhotoDetailScreen(
                     context.startActivity(event.intent)
                 }
                 is SetWallpaperEvent.Error -> {
-                    Toast.makeText(context, "Failed to set wallpaper", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(context, context.getString(R.string.failed_to_set_wallpaper), Toast.LENGTH_SHORT).show()
                 }
             }
         }
@@ -75,7 +75,7 @@ fun PhotoDetailScreen(
                     IconButton(onClick = { navController.popBackStack() }) {
                         Icon(
                             painter = painterResource(id = R.drawable.ic_arrow_back),
-                            contentDescription = "Back"
+                            contentDescription = stringResource(id = R.string.back)
                         )
                     }
                 },
@@ -88,7 +88,7 @@ fun PhotoDetailScreen(
                         }
                         Icon(
                             painter = favoriteIcon,
-                            contentDescription = "Toggle Favorite"
+                            contentDescription = stringResource(id = R.string.favorites)
                         )
                     }
                 }
@@ -96,7 +96,7 @@ fun PhotoDetailScreen(
         },
         floatingActionButton = {
             FloatingActionButton(onClick = { viewModel.onSetWallpaperClicked() }) {
-                Icon(painterResource(id = R.drawable.ic_set_wallpaper), contentDescription = "Set Wallpaper")
+                Icon(painterResource(id = R.drawable.ic_set_wallpaper), contentDescription = stringResource(id = R.string.set_wallpaper))
             }
         }
     ) { paddingValues ->
@@ -110,7 +110,7 @@ fun PhotoDetailScreen(
                 CircularProgressIndicator()
             } else {
                 AsyncImage(
-                    model = photo?.url?.replace("_m.jpg", "_b.jpg"), // Load the large version
+                    model = photo?.largeImageUrl,
                     contentDescription = photo?.title,
                     modifier = Modifier
                         .fillMaxSize()

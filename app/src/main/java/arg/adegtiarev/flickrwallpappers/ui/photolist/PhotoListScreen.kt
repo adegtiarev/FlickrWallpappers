@@ -16,8 +16,8 @@ import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyGridState
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
-import androidx.compose.foundation.lazy.grid.rememberLazyGridState
 import androidx.compose.material3.BottomAppBar
+import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
@@ -36,8 +36,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
+import androidx.paging.LoadState
 import androidx.paging.compose.LazyPagingItems
 import androidx.paging.compose.collectAsLazyPagingItems
 import arg.adegtiarev.flickrwallpappers.R
@@ -83,7 +85,7 @@ fun PhotoListScreen(
                         IconButton(onClick = { viewModel.onTabSelected(SelectedTab.HOME) }) {
                             Icon(
                                 painter = painterResource(id = R.drawable.ic_home),
-                                contentDescription = "Home"
+                                contentDescription = stringResource(id = R.string.home)
                             )
                         }
                         IconButton(onClick = { viewModel.onTabSelected(SelectedTab.FAVORITES) }) {
@@ -91,7 +93,7 @@ fun PhotoListScreen(
                                 painter = painterResource(
                                     id = if (selectedTab == SelectedTab.FAVORITES) R.drawable.ic_favorite_filled else R.drawable.ic_favorite_border
                                 ),
-                                contentDescription = "Favorites"
+                                contentDescription = stringResource(id = R.string.favorites)
                             )
                         }
                     }
@@ -108,11 +110,11 @@ fun PhotoListScreen(
             if (isSearchActive) {
                 val photos = viewModel.searchedPhotos.collectAsLazyPagingItems()
                 PhotoGrid(
-                    gridState = gridState,
-                    photos = photos,
-                    onPhotoClick = { photo ->
-                        viewModel.onPhotoClicked(photo)
-                        navController.navigate(Screen.PhotoDetail.createRoute(photo.id))
+                    gridState = gridState, 
+                    photos = photos, 
+                    onPhotoClick = {
+                        viewModel.onPhotoClicked(it)
+                        navController.navigate(Screen.PhotoDetail.createRoute(it.id))
                     }
                 )
             } else {
@@ -122,9 +124,9 @@ fun PhotoListScreen(
                         PhotoGrid(
                             gridState = gridState,
                             photos = photos,
-                            onPhotoClick = { photo ->
-                                viewModel.onPhotoClicked(photo)
-                                navController.navigate(Screen.PhotoDetail.createRoute(photo.id))
+                            onPhotoClick = {
+                                viewModel.onPhotoClicked(it)
+                                navController.navigate(Screen.PhotoDetail.createRoute(it.id))
                             }
                         )
                     }
@@ -132,7 +134,7 @@ fun PhotoListScreen(
                     SelectedTab.FAVORITES -> {
                         val favoritePhotos by viewModel.favoritePhotos.collectAsState()
                         if (favoritePhotos.isEmpty()) {
-                            Text("You have no favorite photos yet.")
+                            Text(stringResource(id = R.string.no_favorite_photos))
                         } else {
                             LazyVerticalGrid(
                                 state = gridState,
@@ -162,21 +164,37 @@ private fun PhotoGrid(
     photos: LazyPagingItems<Photo>,
     onPhotoClick: (Photo) -> Unit
 ) {
-    if (photos.itemCount == 0) {
-        CircularProgressIndicator()
-    } else {
-        LazyVerticalGrid(
-            state = gridState,
-            columns = GridCells.Adaptive(minSize = 128.dp),
-            modifier = Modifier.fillMaxSize(),
-            horizontalArrangement = Arrangement.spacedBy(4.dp),
-            verticalArrangement = Arrangement.spacedBy(4.dp)
-        ) {
-            items(photos.itemCount, key = { index -> photos.peek(index)?.id ?: index }) { index ->
-                val photo = photos[index]
-                if (photo != null) {
-                    PhotoItem(photo = photo) {
-                        onPhotoClick(photo)
+    Box(modifier = Modifier.fillMaxSize()) {
+        when (photos.loadState.refresh) {
+            is LoadState.Loading -> {
+                CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
+            }
+
+            is LoadState.Error -> {
+                val error = photos.loadState.refresh as LoadState.Error
+                Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                    Text("Error: ${error.error.localizedMessage}")
+                    Button(onClick = { photos.retry() }) {
+                        Text(stringResource(id = R.string.retry))
+                    }
+                }
+            }
+
+            else -> {
+                LazyVerticalGrid(
+                    state = gridState,
+                    columns = GridCells.Adaptive(minSize = 128.dp),
+                    modifier = Modifier.fillMaxSize(),
+                    horizontalArrangement = Arrangement.spacedBy(4.dp),
+                    verticalArrangement = Arrangement.spacedBy(4.dp)
+                ) {
+                    items(photos.itemCount, key = { index -> photos.peek(index)?.id ?: index }) { index ->
+                        val photo = photos[index]
+                        if (photo != null) {
+                            PhotoItem(photo = photo) {
+                                onPhotoClick(photo)
+                            }
+                        }
                     }
                 }
             }
@@ -188,13 +206,16 @@ private fun PhotoGrid(
 @Composable
 private fun DefaultTopAppBar(selectedTab: SelectedTab, onSearchClicked: () -> Unit) {
     TopAppBar(
-        title = { Text(if (selectedTab == SelectedTab.HOME) "Flickr Wallpapers" else "Favorites") },
+        title = { 
+            val title = if (selectedTab == SelectedTab.HOME) stringResource(id = R.string.app_name) else stringResource(id = R.string.favorites)
+            Text(title)
+        },
         actions = {
             if (selectedTab == SelectedTab.HOME) {
                 IconButton(onClick = onSearchClicked) {
                     Icon(
                         painter = painterResource(id = R.drawable.ic_search),
-                        contentDescription = "Search"
+                        contentDescription = stringResource(id = R.string.search)
                     )
                 }
             }
@@ -214,7 +235,7 @@ private fun SearchAppBar(
             TextField(
                 value = query,
                 onValueChange = onQueryChanged,
-                placeholder = { Text("Search photos") },
+                placeholder = { Text(stringResource(id = R.string.search_photos)) },
                 modifier = Modifier.fillMaxWidth(),
                 singleLine = true,
                 colors = TextFieldDefaults.colors(
@@ -230,7 +251,7 @@ private fun SearchAppBar(
             IconButton(onClick = onBackPressed) {
                 Icon(
                     painter = painterResource(id = R.drawable.ic_arrow_back),
-                    contentDescription = "Back"
+                    contentDescription = stringResource(id = R.string.back)
                 )
             }
         }

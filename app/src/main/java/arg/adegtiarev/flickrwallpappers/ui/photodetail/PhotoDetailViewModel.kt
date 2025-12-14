@@ -7,6 +7,7 @@ import androidx.core.content.FileProvider
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import arg.adegtiarev.flickrwallpappers.R
 import arg.adegtiarev.flickrwallpappers.data.local.model.Photo
 import arg.adegtiarev.flickrwallpappers.data.repository.PhotoRepository
 import coil.ImageLoader
@@ -60,10 +61,9 @@ class PhotoDetailViewModel @Inject constructor(
     fun onSetWallpaperClicked() {
         viewModelScope.launch {
             val currentPhoto = photo.value ?: return@launch
-            val largeImageUrl = currentPhoto.url.replace("_m.jpg", "_b.jpg")
 
             val request = ImageRequest.Builder(context)
-                .data(largeImageUrl)
+                .data(currentPhoto.largeImageUrl)
                 .allowHardware(false) // Required for converting to Bitmap
                 .build()
 
@@ -76,7 +76,6 @@ class PhotoDetailViewModel @Inject constructor(
             val bitmap = result.bitmap
 
             try {
-                // 1. Save bitmap to a temporary file
                 val cachePath = File(context.cacheDir, "images")
                 cachePath.mkdirs()
                 val file = File(cachePath, "wallpaper.png")
@@ -84,21 +83,19 @@ class PhotoDetailViewModel @Inject constructor(
                     bitmap.compress(android.graphics.Bitmap.CompressFormat.PNG, 100, it)
                 }
 
-                // 2. Get a content URI for the file using FileProvider
                 val contentUri = FileProvider.getUriForFile(
                     context,
                     "${context.packageName}.provider",
                     file
                 )
 
-                // 3. Create the Intent
                 val intent = Intent(Intent.ACTION_ATTACH_DATA).apply {
                     addCategory(Intent.CATEGORY_DEFAULT)
                     setDataAndType(contentUri, "image/png")
                     addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
                 }
 
-                _setWallpaperEvent.send(SetWallpaperEvent.Success(Intent.createChooser(intent, "Set as:")))
+                _setWallpaperEvent.send(SetWallpaperEvent.Success(Intent.createChooser(intent, context.getString(R.string.set_as))))
 
             } catch (e: Exception) {
                 _setWallpaperEvent.send(SetWallpaperEvent.Error)
