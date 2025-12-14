@@ -1,5 +1,8 @@
 package arg.adegtiarev.flickrwallpappers.ui.photodetail
 
+import android.content.Context
+import android.content.Intent
+import android.widget.Toast
 import androidx.compose.foundation.gestures.rememberTransformableState
 import androidx.compose.foundation.gestures.transformable
 import androidx.compose.foundation.layout.Box
@@ -7,12 +10,14 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
@@ -23,11 +28,13 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import arg.adegtiarev.flickrwallpappers.R
 import coil.compose.AsyncImage
+import kotlinx.coroutines.flow.collectLatest
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -36,9 +43,24 @@ fun PhotoDetailScreen(
     viewModel: PhotoDetailViewModel = hiltViewModel()
 ) {
     val photo by viewModel.photo.collectAsState()
+    val context = LocalContext.current
 
     var scale by remember { mutableFloatStateOf(1f) }
     var offset by remember { mutableStateOf(Offset.Zero) }
+
+    // Listen for events from the ViewModel
+    LaunchedEffect(Unit) {
+        viewModel.setWallpaperEvent.collectLatest { event ->
+            when (event) {
+                is SetWallpaperEvent.Success -> {
+                    context.startActivity(event.intent)
+                }
+                is SetWallpaperEvent.Error -> {
+                    Toast.makeText(context, "Failed to set wallpaper", Toast.LENGTH_SHORT).show()
+                }
+            }
+        }
+    }
 
     val transformableState = rememberTransformableState { zoomChange, offsetChange, _ ->
         scale *= zoomChange
@@ -71,6 +93,11 @@ fun PhotoDetailScreen(
                     }
                 }
             )
+        },
+        floatingActionButton = {
+            FloatingActionButton(onClick = { viewModel.onSetWallpaperClicked() }) {
+                Icon(painterResource(id = R.drawable.ic_set_wallpaper), contentDescription = "Set Wallpaper")
+            }
         }
     ) { paddingValues ->
         Box(
