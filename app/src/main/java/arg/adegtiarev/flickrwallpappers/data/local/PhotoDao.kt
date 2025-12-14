@@ -47,6 +47,12 @@ interface PhotoDao {
     fun getPhotoById(photoId: String): Flow<Photo?>
 
     /**
+     * Returns a list of photos matching the given IDs.
+     */
+    @Query("SELECT * FROM photos WHERE id IN (:photoIds)")
+    suspend fun getPhotosByIds(photoIds: List<String>): List<Photo>
+
+    /**
      * Deletes all photos from the table.
      */
     @Query("DELETE FROM photos")

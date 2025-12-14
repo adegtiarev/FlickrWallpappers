@@ -26,27 +26,29 @@ class FlickrRemoteMediator(
 
     override suspend fun load(loadType: LoadType, state: PagingState<Int, Photo>): MediatorResult {
         return try {
-            // 1. Determine which page to load
             val loadKey = when (loadType) {
-                LoadType.REFRESH -> 1 // Always start from the first page on refresh
-                LoadType.PREPEND -> return MediatorResult.Success(endOfPaginationReached = true) // We don't load data at the beginning of the list
+                LoadType.REFRESH -> 1
+                LoadType.PREPEND -> return MediatorResult.Success(endOfPaginationReached = true)
                 LoadType.APPEND -> {
                     val remoteKeys = getLastRemoteKey(state)
                     remoteKeys?.nextKey ?: return MediatorResult.Success(endOfPaginationReached = true)
                 }
             }
 
-            // 2. Load data from the network
             val response = flickrApiService.fetchPhotos(page = loadKey)
             val photosDto = response.photos.photo
             val endOfPaginationReached = photosDto.isEmpty()
 
-            // 3. Save the data to the database within a single transaction
             database.withTransaction {
                 if (loadType == LoadType.REFRESH) {
-                    photoDao.clearAll()
-                    remoteKeysDao.clearRemoteKeys()
+                    // Don't clear the whole table, as it would delete all favorites.
+                    // We will just replace the items from the network.
                 }
+
+                // Get current favorite statuses from the DB
+                val photoIds = photosDto.map { it.id }
+                val favoritePhotos = photoDao.getPhotosByIds(photoIds).filter { it.isFavorite }
+                val favoritePhotoIds = favoritePhotos.map { it.id }.toSet()
 
                 val prevKey = if (loadKey == 1) null else loadKey - 1
                 val nextKey = if (endOfPaginationReached) null else loadKey + 1
@@ -54,13 +56,16 @@ class FlickrRemoteMediator(
                 val keys = photosDto.map {
                     RemoteKeys(photoId = it.id, prevKey = prevKey, nextKey = nextKey)
                 }
-                val entities = photosDto.map { it.toEntity() }
+                // Merge network data with local favorite status
+                val entities = photosDto.map {
+                    val isFavorite = it.id in favoritePhotoIds
+                    it.toEntity().copy(isFavorite = isFavorite)
+                }
 
                 remoteKeysDao.insertAll(keys)
                 photoDao.insertAll(entities)
             }
 
-            // 4. Return the result
             MediatorResult.Success(endOfPaginationReached = endOfPaginationReached)
         } catch (e: IOException) {
             MediatorResult.Error(e)

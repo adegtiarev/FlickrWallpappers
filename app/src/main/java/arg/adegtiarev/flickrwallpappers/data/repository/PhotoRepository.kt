@@ -8,6 +8,7 @@ import arg.adegtiarev.flickrwallpappers.data.local.AppDatabase
 import arg.adegtiarev.flickrwallpappers.data.local.model.Photo
 import arg.adegtiarev.flickrwallpappers.data.remote.FlickrApiService
 import arg.adegtiarev.flickrwallpappers.data.remote.FlickrRemoteMediator
+import arg.adegtiarev.flickrwallpappers.data.remote.FlickrSearchPagingSource
 import kotlinx.coroutines.flow.Flow
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -42,6 +43,19 @@ class PhotoRepository @Inject constructor(
     }
 
     /**
+     * Returns a Flow of PagingData for search results (online only).
+     */
+    fun searchPhotos(query: String): Flow<PagingData<Photo>> {
+        return Pager(
+            config = PagingConfig(
+                pageSize = 30,
+                enablePlaceholders = false
+            ),
+            pagingSourceFactory = { FlickrSearchPagingSource(flickrApiService, query) }
+        ).flow
+    }
+
+    /**
      * Returns a Flow with a list of favorite photos.
      */
     fun getFavoritePhotos(): Flow<List<Photo>> {
@@ -60,5 +74,13 @@ class PhotoRepository @Inject constructor(
      */
     suspend fun updatePhoto(photo: Photo) {
         photoDao.update(photo)
+    }
+
+    /**
+     * Caches a single photo in the local database.
+     * Uses REPLACE strategy, so it also works as an update.
+     */
+    suspend fun cachePhoto(photo: Photo) {
+        photoDao.insertAll(listOf(photo))
     }
 }

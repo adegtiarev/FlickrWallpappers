@@ -1,5 +1,9 @@
 package arg.adegtiarev.flickrwallpappers.ui.photolist
 
+import androidx.activity.compose.BackHandler
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -20,6 +24,8 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextField
+import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
@@ -27,10 +33,12 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
+import androidx.paging.compose.LazyPagingItems
 import androidx.paging.compose.collectAsLazyPagingItems
 import arg.adegtiarev.flickrwallpappers.R
 import arg.adegtiarev.flickrwallpappers.data.local.model.Photo
@@ -44,44 +52,48 @@ fun PhotoListScreen(
     viewModel: PhotoListViewModel
 ) {
     val selectedTab by viewModel.selectedTab.collectAsState()
+    val isSearchActive by viewModel.isSearchActive.collectAsState()
+    val searchQuery by viewModel.searchQuery.collectAsState()
 
-    // Create and remember the grid state. It will be saved and restored across configuration changes and navigation.
     val gridState: LazyGridState = rememberSaveable(saver = LazyGridState.Saver) { LazyGridState() }
+
+    BackHandler(enabled = isSearchActive) {
+        viewModel.onSearchActiveChange(false)
+    }
 
     Scaffold(
         topBar = {
-            TopAppBar(
-                title = { Text(if (selectedTab == SelectedTab.HOME) "Flickr Wallpapers" else "Favorites") },
-                actions = {
-                    if (selectedTab == SelectedTab.HOME) {
-                        IconButton(onClick = { /* TODO: Implement search functionality */ }) {
-                            Icon(
-                                painter = painterResource(id = R.drawable.ic_search),
-                                contentDescription = "Search"
-                            )
-                        }
-                    }
-                }
-            )
+            if (isSearchActive) {
+                SearchAppBar(query = searchQuery,
+                    onQueryChanged = { viewModel.onSearchQueryChanged(it) },
+                    onBackPressed = { viewModel.onSearchActiveChange(false) })
+            } else {
+                DefaultTopAppBar(selectedTab = selectedTab,
+                    onSearchClicked = { viewModel.onSearchActiveChange(true) })
+            }
         },
         bottomBar = {
-            BottomAppBar {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceAround,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    IconButton(onClick = { viewModel.onTabSelected(SelectedTab.HOME) }) {
-                        Icon(
-                            painter = painterResource(id = R.drawable.ic_home),
-                            contentDescription = "Home"
-                        )
-                    }
-                    IconButton(onClick = { viewModel.onTabSelected(SelectedTab.FAVORITES) }) {
-                        Icon(
-                            painter = painterResource(id = if (selectedTab == SelectedTab.FAVORITES) R.drawable.ic_favorite_filled else R.drawable.ic_favorite_border),
-                            contentDescription = "Favorites"
-                        )
+            AnimatedVisibility(visible = !isSearchActive, enter = fadeIn(), exit = fadeOut()) {
+                BottomAppBar {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceAround,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        IconButton(onClick = { viewModel.onTabSelected(SelectedTab.HOME) }) {
+                            Icon(
+                                painter = painterResource(id = R.drawable.ic_home),
+                                contentDescription = "Home"
+                            )
+                        }
+                        IconButton(onClick = { viewModel.onTabSelected(SelectedTab.FAVORITES) }) {
+                            Icon(
+                                painter = painterResource(
+                                    id = if (selectedTab == SelectedTab.FAVORITES) R.drawable.ic_favorite_filled else R.drawable.ic_favorite_border
+                                ),
+                                contentDescription = "Favorites"
+                            )
+                        }
                     }
                 }
             }
@@ -93,46 +105,47 @@ fun PhotoListScreen(
                 .padding(paddingValues),
             contentAlignment = Alignment.Center
         ) {
-            when (selectedTab) {
-                SelectedTab.HOME -> {
-                    val photos = viewModel.pagedPhotos.collectAsLazyPagingItems()
-                    if (photos.itemCount == 0) {
-                        CircularProgressIndicator()
-                    } else {
-                        LazyVerticalGrid(
-                            state = gridState, // Pass the saved state to the grid
-                            columns = GridCells.Adaptive(minSize = 128.dp),
-                            modifier = Modifier.fillMaxSize(),
-                            horizontalArrangement = Arrangement.spacedBy(4.dp),
-                            verticalArrangement = Arrangement.spacedBy(4.dp)
-                        ) {
-                            items(photos.itemCount, key = { index -> photos.peek(index)?.id ?: index }) { index ->
-                                val photo = photos[index]
-                                if (photo != null) {
+            if (isSearchActive) {
+                val photos = viewModel.searchedPhotos.collectAsLazyPagingItems()
+                PhotoGrid(
+                    gridState = gridState,
+                    photos = photos,
+                    onPhotoClick = { photo ->
+                        viewModel.onPhotoClicked(photo)
+                        navController.navigate(Screen.PhotoDetail.createRoute(photo.id))
+                    }
+                )
+            } else {
+                when (selectedTab) {
+                    SelectedTab.HOME -> {
+                        val photos = viewModel.pagedPhotos.collectAsLazyPagingItems()
+                        PhotoGrid(
+                            gridState = gridState,
+                            photos = photos,
+                            onPhotoClick = { photo ->
+                                viewModel.onPhotoClicked(photo)
+                                navController.navigate(Screen.PhotoDetail.createRoute(photo.id))
+                            }
+                        )
+                    }
+
+                    SelectedTab.FAVORITES -> {
+                        val favoritePhotos by viewModel.favoritePhotos.collectAsState()
+                        if (favoritePhotos.isEmpty()) {
+                            Text("You have no favorite photos yet.")
+                        } else {
+                            LazyVerticalGrid(
+                                state = gridState,
+                                columns = GridCells.Adaptive(minSize = 128.dp),
+                                modifier = Modifier.fillMaxSize(),
+                                horizontalArrangement = Arrangement.spacedBy(4.dp),
+                                verticalArrangement = Arrangement.spacedBy(4.dp)
+                            ) {
+                                items(favoritePhotos, key = { it.id }) { photo ->
                                     PhotoItem(photo = photo) {
+                                        viewModel.onPhotoClicked(photo)
                                         navController.navigate(Screen.PhotoDetail.createRoute(photo.id))
                                     }
-                                }
-                            }
-                        }
-                    }
-                }
-
-                SelectedTab.FAVORITES -> {
-                    val favoritePhotos by viewModel.favoritePhotos.collectAsState()
-                    if (favoritePhotos.isEmpty()) {
-                        Text("You have no favorite photos yet.")
-                    } else {
-                        LazyVerticalGrid(
-                            state = gridState, // Pass the saved state to the grid
-                            columns = GridCells.Adaptive(minSize = 128.dp),
-                            modifier = Modifier.fillMaxSize(),
-                            horizontalArrangement = Arrangement.spacedBy(4.dp),
-                            verticalArrangement = Arrangement.spacedBy(4.dp)
-                        ) {
-                            items(favoritePhotos, key = { it.id }) { photo ->
-                                PhotoItem(photo = photo) {
-                                    navController.navigate(Screen.PhotoDetail.createRoute(photo.id))
                                 }
                             }
                         }
@@ -141,6 +154,87 @@ fun PhotoListScreen(
             }
         }
     }
+}
+
+@Composable
+private fun PhotoGrid(
+    gridState: LazyGridState,
+    photos: LazyPagingItems<Photo>,
+    onPhotoClick: (Photo) -> Unit
+) {
+    if (photos.itemCount == 0) {
+        CircularProgressIndicator()
+    } else {
+        LazyVerticalGrid(
+            state = gridState,
+            columns = GridCells.Adaptive(minSize = 128.dp),
+            modifier = Modifier.fillMaxSize(),
+            horizontalArrangement = Arrangement.spacedBy(4.dp),
+            verticalArrangement = Arrangement.spacedBy(4.dp)
+        ) {
+            items(photos.itemCount, key = { index -> photos.peek(index)?.id ?: index }) { index ->
+                val photo = photos[index]
+                if (photo != null) {
+                    PhotoItem(photo = photo) {
+                        onPhotoClick(photo)
+                    }
+                }
+            }
+        }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun DefaultTopAppBar(selectedTab: SelectedTab, onSearchClicked: () -> Unit) {
+    TopAppBar(
+        title = { Text(if (selectedTab == SelectedTab.HOME) "Flickr Wallpapers" else "Favorites") },
+        actions = {
+            if (selectedTab == SelectedTab.HOME) {
+                IconButton(onClick = onSearchClicked) {
+                    Icon(
+                        painter = painterResource(id = R.drawable.ic_search),
+                        contentDescription = "Search"
+                    )
+                }
+            }
+        }
+    )
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun SearchAppBar(
+    query: String,
+    onQueryChanged: (String) -> Unit,
+    onBackPressed: () -> Unit
+) {
+    TopAppBar(
+        title = {
+            TextField(
+                value = query,
+                onValueChange = onQueryChanged,
+                placeholder = { Text("Search photos") },
+                modifier = Modifier.fillMaxWidth(),
+                singleLine = true,
+                colors = TextFieldDefaults.colors(
+                    focusedContainerColor = Color.Transparent,
+                    unfocusedContainerColor = Color.Transparent,
+                    disabledContainerColor = Color.Transparent,
+                    focusedIndicatorColor = Color.Transparent,
+                    unfocusedIndicatorColor = Color.Transparent,
+                )
+            )
+        },
+        navigationIcon = {
+            IconButton(onClick = onBackPressed) {
+                Icon(
+                    painter = painterResource(id = R.drawable.ic_arrow_back),
+                    contentDescription = "Back"
+                )
+            }
+        }
+    )
 }
 
 @Composable
